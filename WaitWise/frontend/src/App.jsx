@@ -9,6 +9,7 @@ import Locations from './pages/Locations';
 import JoinQueue from './pages/JoinQueue';
 import MyQueue from './pages/MyQueue';
 import AdminLogin from './pages/AdminLogin';
+import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import Analytics from './pages/Analytics';
 
@@ -37,6 +38,7 @@ function App() {
           <Route path="/locations" element={<Locations />} />
           <Route path="/join-queue" element={<JoinQueue />} />
           <Route path="/my-queue" element={<MyQueue />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/analytics" element={<Analytics />} />

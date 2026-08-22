@@ -124,10 +124,10 @@ const Navbar = ({ theme, toggleTheme }) => {
           <div style={{ height: '24px', width: '1px', background: 'var(--border-subtle)', margin: '0 0.4rem' }} />
 
           <NavLink
-            to={adminSession ? '/admin/dashboard' : '/admin/login'}
+            to={adminSession ? '/admin/dashboard' : '/login'}
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            <LayoutDashboard size={16} /> {adminSession ? 'Admin Panel' : 'Staff Login'}
+            <LayoutDashboard size={16} /> {adminSession ? 'Staff Active' : 'Sign In'}
           </NavLink>
           <NavLink
             to="/analytics"
@@ -225,6 +225,7 @@ const Navbar = ({ theme, toggleTheme }) => {
           <NavLink to="/locations" className="mobile-nav-link"><MapPin size={16} /> Locations & Wait Times</NavLink>
           <NavLink to="/join-queue" className="mobile-nav-link"><PlusCircle size={16} /> Join Live Queue</NavLink>
           <NavLink to="/my-queue" className="mobile-nav-link"><Ticket size={16} /> My Active Tickets ({activeTokenCount})</NavLink>
+          <NavLink to="/login" className="mobile-nav-link"><User size={16} /> Sign In / Login</NavLink>
           <NavLink to="/admin/dashboard" className="mobile-nav-link"><LayoutDashboard size={16} /> Admin Queue Control</NavLink>
           <NavLink to="/analytics" className="mobile-nav-link"><BarChart3 size={16} /> Queue Analytics & SLA</NavLink>
         </div>
