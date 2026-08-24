@@ -1,73 +1,128 @@
 const recommendationService = require('../services/recommendationService');
 
 /**
- * Get all available canteen services
- * GET /api/services
+ * Get All Canteens
+ * GET /api/canteens or GET /api/services
  */
-const getAllServices = async (req, res) => {
+const getAllCanteens = async (req, res) => {
   try {
-    const services = await recommendationService.getAllServices();
+    const canteens = await recommendationService.getAllCanteens();
     return res.status(200).json({
       success: true,
-      count: services.length,
-      data: services,
+      count: canteens.length,
+      data: canteens,
     });
   } catch (error) {
-    console.error('Error fetching services:', error);
+    console.error('Error fetching canteens:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to retrieve canteen services.',
+      message: 'Failed to retrieve canteen locations.',
     });
   }
 };
 
 /**
- * Get single service details
- * GET /api/services/:serviceId
+ * Get Single Canteen By ID
+ * GET /api/canteens/:canteenId
  */
-const getServiceById = async (req, res) => {
+const getCanteenById = async (req, res) => {
   try {
-    const { serviceId } = req.params;
-    const service = await recommendationService.getServiceById(serviceId);
+    const { canteenId, serviceId } = req.params;
+    const targetId = canteenId || serviceId;
+    const canteen = await recommendationService.getCanteenById(targetId);
 
-    if (!service) {
+    if (!canteen) {
       return res.status(404).json({
         success: false,
-        message: `Service with ID '${serviceId}' was not found.`,
+        message: `Canteen with ID '${targetId}' was not found.`,
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: service,
+      data: canteen,
     });
   } catch (error) {
-    console.error('Error fetching service:', error);
+    console.error('Error fetching canteen:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to retrieve service details.',
+      message: 'Failed to retrieve canteen details.',
     });
   }
 };
 
 /**
- * Get ML Content-Based Recommendations using Cosine Similarity
- * GET /api/services/:serviceId/recommendations
+ * Get Menu Items
+ * GET /api/menu
  */
-const getRecommendations = async (req, res) => {
+const getMenu = async (req, res) => {
   try {
-    const { serviceId } = req.params;
-    const topK = parseInt(req.query.limit || '4', 10);
-
-    const result = await recommendationService.getSimilarServices(serviceId, topK);
+    const { canteenId, category, isVeg, search } = req.query;
+    const items = await recommendationService.getMenuItems({ canteenId, category, isVeg, search });
 
     return res.status(200).json({
       success: true,
-      serviceId,
+      count: items.length,
+      data: items,
+    });
+  } catch (error) {
+    console.error('Error fetching menu:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve menu items.',
+    });
+  }
+};
+
+/**
+ * Get Single Food Item
+ * GET /api/menu/:itemId
+ */
+const getFoodItemById = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const item = await recommendationService.getFoodItemById(itemId);
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: `Food item '${itemId}' was not found.`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: item,
+    });
+  } catch (error) {
+    console.error('Error fetching food item:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve food item.',
+    });
+  }
+};
+
+/**
+ * Get ML Recommendations for Food Item
+ * GET /api/menu/:itemId/recommendations or GET /api/services/:serviceId/recommendations
+ */
+const getRecommendations = async (req, res) => {
+  try {
+    const { itemId, serviceId } = req.params;
+    const targetId = itemId || serviceId;
+    const limit = parseInt(req.query.limit || '4', 10);
+    const { canteenId } = req.query;
+
+    const result = await recommendationService.getFoodRecommendations(targetId, limit, canteenId);
+
+    return res.status(200).json({
+      success: true,
+      itemId: targetId,
       algorithm: 'Content-Based Cosine Similarity (TF Vector Space)',
-      vocabularySize: result.vocabulary.length,
+      vocabularySize: result.vocabularyLength,
       recommendations: result.recommendations,
-      targetService: result.targetService,
+      targetItem: result.targetItem,
     });
   } catch (error) {
     console.error('Error fetching recommendations:', error);
@@ -79,7 +134,12 @@ const getRecommendations = async (req, res) => {
 };
 
 module.exports = {
-  getAllServices,
-  getServiceById,
+  getAllCanteens,
+  getCanteenById,
+  getMenu,
+  getFoodItemById,
   getRecommendations,
+  // Backward compatibility aliases
+  getAllServices: getAllCanteens,
+  getServiceById: getCanteenById,
 };

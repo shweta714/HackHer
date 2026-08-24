@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  BarChart3, 
-  Clock, 
-  Users, 
-  Zap, 
-  TrendingUp, 
-  ArrowLeft, 
-  CheckCircle2, 
-  Info, 
+import {
+  BarChart3,
+  Clock,
+  Users,
+  Zap,
+  TrendingUp,
+  ArrowLeft,
+  CheckCircle2,
+  Info,
   ShieldCheck,
   Calendar,
   Flame
@@ -60,7 +60,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 transition-colors duration-200">
-      
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
         <div className="space-y-1">
@@ -89,7 +89,7 @@ export default function AnalyticsPage() {
 
       {/* 4 CORE ANALYTICS TILES */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        
+
         {/* Metric 1: People Served Today */}
         <div className="p-6 rounded-3xl glass-panel border border-slate-200 dark:border-slate-800 space-y-2">
           <div className="flex items-center justify-between">
@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
       {/* SPECIAL METRIC: Total Physical Waiting Time Saved */}
       <div className="p-8 rounded-3xl bg-gradient-to-r from-teal-50 via-slate-50 to-indigo-50 dark:from-teal-950/60 dark:via-slate-900 dark:to-indigo-950/60 border border-teal-500/40 shadow-2xl relative overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          
+
           <div className="lg:col-span-8 space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/15 text-teal-800 dark:text-teal-300 text-xs font-bold uppercase tracking-wider">
               <Zap className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
@@ -198,11 +198,10 @@ export default function AnalyticsPage() {
             return (
               <div
                 key={item.hour}
-                className={`p-4 rounded-2xl border text-center transition-all ${
-                  isPeak
+                className={`p-4 rounded-2xl border text-center transition-all ${isPeak
                     ? 'bg-teal-500/10 border-teal-500/40 ring-1 ring-teal-500/30'
                     : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80'
-                }`}
+                  }`}
               >
                 <div className="text-xs font-bold text-slate-500 dark:text-slate-400">{item.hour}</div>
                 <div className={`text-2xl font-black font-mono my-2 ${isPeak ? 'text-teal-700 dark:text-teal-300' : 'text-slate-900 dark:text-white'}`}>

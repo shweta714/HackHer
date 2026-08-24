@@ -7,6 +7,8 @@ const { connectDB } = require('./config/db');
 const queueRoutes = require('./routes/queueRoutes');
 const tokenRoutes = require('./routes/tokenRoutes');
 const authRoutes = require('./routes/authRoutes');
+const canteenRoutes = require('./routes/canteenRoutes');
+const menuRoutes = require('./routes/menuRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const queueService = require('./services/queueService');
 
@@ -29,7 +31,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logger for easy debugging
+// Request logger
 app.use((req, res, next) => {
   if (process.env.NODE_ENV !== 'production') {
     console.log(`[${req.method}] ${req.url}`);
@@ -41,15 +43,18 @@ app.use((req, res, next) => {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
-    app: 'WAITWISE Queue Intelligence API',
+    app: 'WAITWISE College Canteen Queue Intelligence API',
     timestamp: new Date(),
   });
 });
 
-// Routes
+// Dedicated Route Mounts
 app.use('/api/auth', authRoutes);
-app.use('/api/services', serviceRoutes);
+app.use('/api/canteens', canteenRoutes);
+app.use('/api/menu', menuRoutes);
+app.use('/api/services', canteenRoutes);
 app.use('/api/queue', queueRoutes);
+app.use('/api/orders', queueRoutes);
 app.use('/api/token', tokenRoutes);
 
 // 404 Handler
@@ -71,7 +76,6 @@ app.use((err, req, res, next) => {
 io.on('connection', (socket) => {
   console.log(`⚡ Client connected via Socket.IO: ${socket.id}`);
 
-  // Client joins a specific location room (e.g. "campus-canteen")
   socket.on('join_location', (locationId) => {
     const room = `location_${locationId}`;
     socket.join(room);
@@ -93,23 +97,19 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  // Connect to DB (with resilient memory fallback if local mongo is offline)
   await connectDB();
 
-  // Auto-initialize demo state for immediate out-of-the-box presentation
+  // Auto-seed demo data on startup
   try {
-    const status = await queueService.getQueueStatus('campus-canteen');
-    if (status.peopleWaiting === 0 && status.currentServingToken === 0) {
-      console.log('🚀 Pre-seeding initial demo data for smooth hackathon showcase...');
-      await queueService.seedDemoData('campus-canteen');
-    }
+    await queueService.seedDemoData('main-campus');
+    await queueService.seedDemoData('block-b');
   } catch (err) {
     console.warn('Initial seed notice:', err.message);
   }
 
   server.listen(PORT, () => {
     console.log(`=============================================`);
-    console.log(`🚀 WAITWISE Backend running on http://localhost:${PORT}`);
+    console.log(`🚀 WAITWISE Canteen Backend running on http://localhost:${PORT}`);
     console.log(`📡 Real-Time Socket.IO initialized`);
     console.log(`=============================================`);
   });

@@ -1,136 +1,35 @@
-const queueService = require('./queueService');
+const { CANTEENS, FOOD_ITEMS } = require('../data/canteenData');
 
 /**
- * 8 Realistic Canteen Services / Counters with rich, overlapping and distinct tag sets
+ * 1. Build Vocabulary from all food tags, categories, and attributes
  */
-const CANTEEN_SERVICES = [
-  {
-    id: 'canteen-snacks',
-    name: 'Main Canteen - Snacks',
-    category: 'Snacks',
-    description: 'Hot samosas, crispy veg patties, kathi rolls, and fast canteen finger food.',
-    tags: ['snacks', 'quick-service', 'fast-food', 'vegetarian'],
-    locationId: 'campus-canteen',
-    averageServiceTime: 2.0,
-    activeCounters: 2,
-    baseQueueLength: 7,
-    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'canteen-meals',
-    name: 'Main Canteen - Meals',
-    category: 'Meals',
-    description: 'Fresh North & South Indian thalis, rice bowls, dal makhani, and full lunch platters.',
-    tags: ['meals', 'lunch', 'vegetarian', 'healthy', 'thali'],
-    locationId: 'campus-canteen',
-    averageServiceTime: 3.5,
-    activeCounters: 2,
-    baseQueueLength: 5,
-    image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'coffee-counter',
-    name: 'Coffee & Brew Bar',
-    category: 'Beverages',
-    description: 'Artisan filter coffee, cappuccino, iced lattes, and quick bakery biscuits.',
-    tags: ['beverages', 'coffee', 'quick-service', 'snacks', 'desserts'],
-    locationId: 'snack-bar',
-    averageServiceTime: 1.5,
-    activeCounters: 2,
-    baseQueueLength: 3,
-    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'juice-counter',
-    name: 'Fresh Juice & Smoothies',
-    category: 'Beverages',
-    description: 'Cold-pressed seasonal fruit juices, protein shakes, and healthy citrus coolers.',
-    tags: ['beverages', 'juice', 'healthy', 'quick-service', 'vegetarian'],
-    locationId: 'snack-bar',
-    averageServiceTime: 2.0,
-    activeCounters: 1,
-    baseQueueLength: 4,
-    image: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'fast-food-counter',
-    name: 'Fast Food Express',
-    category: 'Fast Food',
-    description: 'Crispy burgers, cheesy fries, grilled sandwiches, and spicy noodle bowls.',
-    tags: ['fast-food', 'snacks', 'quick-service', 'takeaway'],
-    locationId: 'campus-canteen',
-    averageServiceTime: 2.5,
-    activeCounters: 2,
-    baseQueueLength: 8,
-    image: 'https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'bakery-counter',
-    name: 'Bakery & Pastry Counter',
-    category: 'Bakery',
-    description: 'Freshly baked chocolate croissants, muffins, tea cakes, and savory puffs.',
-    tags: ['bakery', 'desserts', 'snacks', 'quick-service', 'coffee'],
-    locationId: 'snack-bar',
-    averageServiceTime: 1.5,
-    activeCounters: 1,
-    baseQueueLength: 2,
-    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'healthy-counter',
-    name: 'Healthy Greens & Salad Bar',
-    category: 'Healthy',
-    description: 'Custom protein salads, sprout chaat, fruit bowls, and detox drink mixes.',
-    tags: ['healthy', 'vegetarian', 'meals', 'quick-service', 'juice'],
-    locationId: 'campus-canteen',
-    averageServiceTime: 2.0,
-    activeCounters: 1,
-    baseQueueLength: 2,
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'takeaway-counter',
-    name: 'Campus Takeaway Express',
-    category: 'Takeaway',
-    description: 'Pre-packed express meals, wraps, and quick grab-and-go combos for busy students.',
-    tags: ['takeaway', 'fast-food', 'meals', 'quick-service'],
-    locationId: 'campus-canteen',
-    averageServiceTime: 1.5,
-    activeCounters: 2,
-    baseQueueLength: 4,
-    image: 'https://images.unsplash.com/photo-1526367790999-0150786686a2?w=600&auto=format&fit=crop&q=80',
-  },
-];
-
-/**
- * 1. Extract Global Feature Tag Vocabulary
- * V = [ 'beverages', 'coffee', 'juice', 'quick-service', 'snacks', 'meals', 'fast-food', 'healthy', 'bakery', 'takeaway', 'desserts', 'vegetarian', 'lunch', 'thali' ]
- */
-function buildVocabulary(services = CANTEEN_SERVICES) {
+function buildFoodVocabulary(items = FOOD_ITEMS) {
   const vocabSet = new Set();
-  services.forEach(service => {
-    service.tags.forEach(tag => vocabSet.add(tag.toLowerCase().trim()));
+  items.forEach(item => {
+    if (item.category) vocabSet.add(`cat:${item.category.toLowerCase()}`);
+    if (item.spiceLevel) vocabSet.add(`spice:${item.spiceLevel.toLowerCase()}`);
+    if (item.isVeg !== undefined) vocabSet.add(item.isVeg ? 'diet:veg' : 'diet:nonveg');
+    (item.tags || []).forEach(tag => vocabSet.add(`tag:${tag.toLowerCase().trim()}`));
   });
   return Array.from(vocabSet).sort();
 }
 
 /**
- * 2. Convert a service into a binary feature vector based on vocabulary
- * @param {Array<string>} tags
- * @param {Array<string>} vocabulary
- * @returns {Array<number>} Binary vector [1, 0, 1, 1, ...]
+ * 2. Convert a food item into a feature vector based on vocabulary
  */
-function vectorize(tags, vocabulary) {
-  const tagSet = new Set(tags.map(t => t.toLowerCase().trim()));
-  return vocabulary.map(word => (tagSet.has(word) ? 1 : 0));
+function vectorizeFoodItem(item, vocabulary) {
+  const itemFeatures = new Set();
+  if (item.category) itemFeatures.add(`cat:${item.category.toLowerCase()}`);
+  if (item.spiceLevel) itemFeatures.add(`spice:${item.spiceLevel.toLowerCase()}`);
+  if (item.isVeg !== undefined) itemFeatures.add(item.isVeg ? 'diet:veg' : 'diet:nonveg');
+  (item.tags || []).forEach(tag => itemFeatures.add(`tag:${tag.toLowerCase().trim()}`));
+
+  return vocabulary.map(word => (itemFeatures.has(word) ? 1 : 0));
 }
 
 /**
  * 3. Exact Mathematical Cosine Similarity
  * CosineSimilarity(A, B) = (A • B) / (||A|| * ||B||)
- * @param {Array<number>} vecA
- * @param {Array<number>} vecB
- * @returns {number} Value between 0.0 and 1.0
  */
 function calculateCosineSimilarity(vecA, vecB) {
   if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
@@ -152,125 +51,129 @@ function calculateCosineSimilarity(vecA, vecB) {
 }
 
 /**
- * Helper to dynamically enrich service with live queue predictions
+ * Get All Canteens
  */
-async function enrichServiceWithLiveQueue(service) {
-  try {
-    const queueStatus = await queueService.getQueueStatus(service.locationId);
-    
-    // Calculate live people waiting for this counter
-    const activeWaitingCount = queueStatus.peopleWaiting > 0 
-      ? queueStatus.peopleWaiting 
-      : service.baseQueueLength;
+async function getAllCanteens() {
+  return CANTEENS.map(c => ({
+    ...c,
+    activeQueue: c.id === 'main-campus' ? 14 : 6,
+    estimatedWait: c.id === 'main-campus' ? 12 : 7,
+  }));
+}
 
-    const predictedWait = queueService.calculateETA(
-      activeWaitingCount,
-      service.averageServiceTime,
-      service.activeCounters,
-      1.0
+/**
+ * Get Canteen By ID
+ */
+async function getCanteenById(canteenId) {
+  const canteen = CANTEENS.find(c => c.id === canteenId);
+  if (!canteen) return null;
+  return {
+    ...canteen,
+    activeQueue: canteen.id === 'main-campus' ? 14 : 6,
+    estimatedWait: canteen.id === 'main-campus' ? 12 : 7,
+  };
+}
+
+/**
+ * Get Menu Items (optionally filtered by canteenId, category, isVeg, search)
+ */
+async function getMenuItems({ canteenId, category, isVeg, search } = {}) {
+  let items = [...FOOD_ITEMS];
+
+  if (canteenId) {
+    items = items.filter(i => i.canteenId === canteenId);
+  }
+
+  if (category && category !== 'All') {
+    items = items.filter(i => i.category.toLowerCase() === category.toLowerCase());
+  }
+
+  if (isVeg !== undefined) {
+    const isVegBool = String(isVeg) === 'true';
+    items = items.filter(i => i.isVeg === isVegBool);
+  }
+
+  if (search && search.trim()) {
+    const q = search.toLowerCase();
+    items = items.filter(i => 
+      i.name.toLowerCase().includes(q) ||
+      (i.description && i.description.toLowerCase().includes(q)) ||
+      (i.tags && i.tags.some(t => t.toLowerCase().includes(q)))
     );
-
-    let crowdLevel = 'Low';
-    if (activeWaitingCount >= 7 || predictedWait >= 15) {
-      crowdLevel = 'High';
-    } else if (activeWaitingCount >= 4 || predictedWait >= 8) {
-      crowdLevel = 'Moderate';
-    }
-
-    return {
-      ...service,
-      queueLength: activeWaitingCount,
-      predictedWait,
-      crowdLevel,
-      currentServingToken: queueStatus.currentServingToken,
-    };
-  } catch (err) {
-    return {
-      ...service,
-      queueLength: service.baseQueueLength,
-      predictedWait: Math.round((service.baseQueueLength * service.averageServiceTime) / service.activeCounters),
-      crowdLevel: service.baseQueueLength >= 6 ? 'High' : 'Moderate',
-      currentServingToken: 12,
-    };
-  }
-}
-
-/**
- * Get all services with live crowd and ETA predictions
- */
-async function getAllServices() {
-  const enriched = await Promise.all(CANTEEN_SERVICES.map(s => enrichServiceWithLiveQueue(s)));
-  return enriched;
-}
-
-/**
- * Get single service details
- */
-async function getServiceById(serviceId) {
-  const service = CANTEEN_SERVICES.find(s => s.id === serviceId);
-  if (!service) return null;
-  return await enrichServiceWithLiveQueue(service);
-}
-
-/**
- * ML Content-Based Recommender using Cosine Similarity
- * @param {string} serviceId
- * @param {number} topK - Number of recommendations to return (3-5)
- */
-async function getSimilarServices(serviceId, topK = 4) {
-  const targetService = CANTEEN_SERVICES.find(s => s.id === serviceId);
-  if (!targetService) {
-    throw new Error(`Service with ID '${serviceId}' not found.`);
   }
 
-  const vocabulary = buildVocabulary(CANTEEN_SERVICES);
-  const targetVector = vectorize(targetService.tags, vocabulary);
-  const targetTagsSet = new Set(targetService.tags.map(t => t.toLowerCase()));
+  return items;
+}
 
-  // Compute similarity with all other services
-  const similarities = [];
+/**
+ * Get Single Food Item By ID
+ */
+async function getFoodItemById(itemId) {
+  return FOOD_ITEMS.find(i => i.id === itemId) || null;
+}
 
-  for (const candidate of CANTEEN_SERVICES) {
-    if (candidate.id === targetService.id) continue; // Exclude current service
+/**
+ * ML Content-Based Food Recommender using Cosine Similarity
+ */
+async function getFoodRecommendations(itemId, topK = 4, targetCanteenId = null) {
+  const targetItem = FOOD_ITEMS.find(i => i.id === itemId);
+  if (!targetItem) {
+    throw new Error(`Food item with ID '${itemId}' not found.`);
+  }
 
-    const candidateVector = vectorize(candidate.tags, vocabulary);
-    const score = calculateCosineSimilarity(targetVector, candidateVector);
+  const vocabulary = buildFoodVocabulary(FOOD_ITEMS);
+  const targetVector = vectorizeFoodItem(targetItem, vocabulary);
+  const targetTagSet = new Set((targetItem.tags || []).map(t => t.toLowerCase()));
 
-    // Extract overlapping matching features/tags
-    const matchingTags = candidate.tags.filter(t => targetTagsSet.has(t.toLowerCase()));
+  // Pool of candidate items (prioritize same canteen if specified, or all items)
+  const candidatePool = targetCanteenId
+    ? FOOD_ITEMS.filter(i => i.canteenId === targetCanteenId)
+    : FOOD_ITEMS;
 
-    // Enrich candidate with live queue data
-    const enrichedCandidate = await enrichServiceWithLiveQueue(candidate);
+  const scoredItems = [];
 
-    similarities.push({
-      ...enrichedCandidate,
-      similarityScore: parseFloat(score.toFixed(4)), // e.g. 0.8165
-      similarityPercentage: Math.round(score * 100), // e.g. 82%
+  for (const candidate of candidatePool) {
+    if (candidate.id === targetItem.id) continue;
+
+    const candidateVector = vectorizeFoodItem(candidate, vocabulary);
+    const similarity = calculateCosineSimilarity(targetVector, candidateVector);
+
+    const matchingTags = (candidate.tags || []).filter(t => targetTagSet.has(t.toLowerCase()));
+
+    scoredItems.push({
+      ...candidate,
+      similarityScore: parseFloat(similarity.toFixed(4)),
+      similarityPercentage: Math.round(similarity * 100),
       matchingTags,
-      matchQuality: score >= 0.75 ? 'High Match' : score >= 0.5 ? 'Good Match' : 'Related',
+      matchQuality: similarity >= 0.75 ? 'High Match' : similarity >= 0.5 ? 'Good Match' : 'Related',
     });
   }
 
-  // Strictly rank by Content-Based Cosine Similarity descending
-  similarities.sort((a, b) => b.similarityScore - a.similarityScore);
+  // Sort by Cosine Similarity descending, then by popularity
+  scoredItems.sort((a, b) => b.similarityScore - a.similarityScore || (b.popularity || 0) - (a.popularity || 0));
 
-  // Return top 3 to 5 recommendations
-  const recommendations = similarities.slice(0, Math.min(topK, similarities.length));
+  const recommendations = scoredItems.slice(0, Math.min(topK, scoredItems.length));
 
   return {
-    targetService: await enrichServiceWithLiveQueue(targetService),
-    vocabulary,
-    totalServicesEvaluated: CANTEEN_SERVICES.length - 1,
+    targetItem,
+    vocabularyLength: vocabulary.length,
     recommendations,
   };
 }
 
 module.exports = {
-  CANTEEN_SERVICES,
-  buildVocabulary,
-  vectorize,
+  CANTEENS,
+  FOOD_ITEMS,
+  buildFoodVocabulary,
+  vectorizeFoodItem,
   calculateCosineSimilarity,
-  getAllServices,
-  getServiceById,
-  getSimilarServices,
+  getAllCanteens,
+  getCanteenById,
+  getMenuItems,
+  getFoodItemById,
+  getFoodRecommendations,
+  // Backward compatibility aliases
+  getAllServices: getAllCanteens,
+  getServiceById: getCanteenById,
+  getSimilarServices: (id, topK) => getFoodRecommendations(id, topK),
 };

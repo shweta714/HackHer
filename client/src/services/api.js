@@ -8,33 +8,55 @@ const api = axios.create({
   timeout: 10000,
 });
 
+export const canteenApi = {
+  getAll: () => api.get('/canteens'),
+  getById: (canteenId) => api.get(`/canteens/${canteenId}`),
+  getMenu: (params = {}) => api.get('/menu', { params }),
+  getItemById: (itemId) => api.get(`/menu/${itemId}`),
+  getRecommendations: (itemId, limit = 4, canteenId = null) =>
+    api.get(`/menu/${itemId}/recommendations`, { params: { limit, canteenId } }),
+};
+
+// Backward compatible alias
 export const serviceApi = {
-  getAll: () => api.get('/services'),
-  getById: (serviceId) => api.get(`/services/${serviceId}`),
-  getRecommendations: (serviceId, limit = 4) => 
-    api.get(`/services/${serviceId}/recommendations`, { params: { limit } }),
+  getAll: () => canteenApi.getAll(),
+  getById: (id) => canteenApi.getById(id),
+  getRecommendations: (id, limit = 4) => canteenApi.getRecommendations(id, limit),
+};
+
+export const orderApi = {
+  createOrder: (orderData) => api.post('/queue/order', orderData),
+  getOrderDetails: (orderId, canteenId = null) =>
+    api.get(`/queue/order/${orderId}`, { params: { canteenId } }),
+  updateStatus: (orderId, status, canteenId = null) =>
+    api.put(`/queue/order/${orderId}/status`, { status, canteenId }),
+  removeOrder: (orderId, canteenId = null) =>
+    api.delete(`/queue/order/${orderId}`, { params: { canteenId } }),
+  cancelOrder: (tokenNumber, locationId = 'main-campus') =>
+    api.delete(`/token/${tokenNumber}`, { params: { locationId } }),
+};
+
+export const queueApi = {
+  joinQueue: (data) => orderApi.createOrder(data),
+  getQueueStatus: (locationId = 'main-campus') => api.get(`/queue/status/${locationId}`),
+  serveNext: (locationId = 'main-campus') => api.post(`/queue/serve-next/${locationId}`),
+  updateConfig: (locationId = 'main-campus', data) => api.put(`/queue/config/${locationId}`, data),
+  removeOrder: (orderId, locationId = 'main-campus') => orderApi.removeOrder(orderId, locationId),
+  seedDemo: (locationId = 'main-campus') => api.post(`/queue/seed/${locationId}`),
+  resetQueue: (locationId = 'main-campus') => api.post(`/queue/reset/${locationId}`),
+  getAnalytics: (locationId = 'main-campus') => api.get(`/queue/analytics/${locationId}`),
+};
+
+export const tokenApi = {
+  getTokenDetails: (tokenNumber, locationId = 'main-campus') =>
+    orderApi.getOrderDetails(tokenNumber, locationId),
+  cancelToken: (tokenNumber, locationId = 'main-campus') =>
+    orderApi.cancelOrder(tokenNumber, locationId),
 };
 
 export const authApi = {
   login: (credentials) => api.post('/auth/login', credentials),
   getMe: () => api.get('/auth/me'),
-};
-
-export const queueApi = {
-  joinQueue: (data) => api.post('/queue/join', data),
-  getQueueStatus: (locationId = 'campus-canteen') => api.get(`/queue/status/${locationId}`),
-  serveNext: (locationId = 'campus-canteen') => api.post(`/queue/serve-next/${locationId}`),
-  updateConfig: (locationId = 'campus-canteen', data) => api.put(`/queue/config/${locationId}`, data),
-  seedDemo: (locationId = 'campus-canteen') => api.post(`/queue/seed/${locationId}`),
-  resetQueue: (locationId = 'campus-canteen') => api.post(`/queue/reset/${locationId}`),
-  getAnalytics: (locationId = 'campus-canteen') => api.get(`/queue/analytics/${locationId}`),
-};
-
-export const tokenApi = {
-  getTokenDetails: (tokenNumber, locationId = 'campus-canteen') => 
-    api.get(`/token/${tokenNumber}`, { params: { locationId } }),
-  cancelToken: (tokenNumber, locationId = 'campus-canteen') => 
-    api.delete(`/token/${tokenNumber}`, { params: { locationId } }),
 };
 
 export default api;

@@ -2,25 +2,35 @@ const express = require('express');
 const router = express.Router();
 const queueController = require('../controllers/queueController');
 
-// Join Queue
-router.post('/join', queueController.joinQueue);
+// Create Order / Join Queue
+router.post('/order', queueController.createOrder);
+router.post('/join', queueController.createOrder);
 
-// Get Queue Live Status
+// Get Live Queue Status per Canteen
 router.get('/status/:locationId', queueController.getQueueStatus);
 
-// Serve Next Customer
-router.post('/serve-next/:locationId', queueController.serveNext);
+// Get Order Tracking Details
+router.get('/order/:orderId', queueController.getOrderDetails);
 
-// Update Queue Settings (Counters, Avg Time)
+// Update Order Status (Admin)
+router.put('/order/:orderId/status', queueController.updateOrderStatus);
+
+// Remove / Clear Order (Admin user remover)
+router.delete('/order/:orderId', queueController.removeOrder);
+
+// Update Active Counters and Service Times
 router.put('/config/:locationId', queueController.updateQueueConfig);
 
-// Seed Demo Data for Instant Hackathon Presentation
+// Advance Queue / Serve Next
+router.post('/serve-next/:locationId', queueController.serveNext);
+
+// Seed Demo Orders
 router.post('/seed/:locationId', queueController.seedDemoData);
 
 // Reset Queue
 router.post('/reset/:locationId', queueController.resetQueue);
 
-// Get Queue Analytics
+// Canteen Queue Analytics
 router.get('/analytics/:locationId', queueController.getAnalytics);
 
 module.exports = router;

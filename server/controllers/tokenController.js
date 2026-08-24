@@ -1,5 +1,12 @@
 const queueService = require('../services/queueService');
 
+const normalizeCanteenId = (id) => {
+  if (!id) return 'main-campus';
+  if (id === 'campus-canteen' || id === 'main') return 'main-campus';
+  if (id === 'snack-bar' || id === 'blockb') return 'block-b';
+  return id;
+};
+
 /**
  * Get Token tracking details
  * GET /api/token/:tokenNumber
@@ -7,20 +14,32 @@ const queueService = require('../services/queueService');
 const getTokenDetails = async (req, res) => {
   try {
     const { tokenNumber } = req.params;
-    const { locationId = 'campus-canteen' } = req.query;
+    const { locationId, canteenId } = req.query;
+    const targetCanteen = locationId || canteenId ? normalizeCanteenId(locationId || canteenId) : null;
 
-    const details = await queueService.getTokenDetails(tokenNumber, locationId);
+    const details = await queueService.getOrderDetails(tokenNumber, targetCanteen);
 
     if (!details) {
       return res.status(404).json({
         success: false,
-        message: `Token #${tokenNumber} was not found for location '${locationId}'.`,
+        message: `Token #${tokenNumber} was not found.`,
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: details,
+      data: {
+        ...details,
+        locationId: details.canteenId,
+        locationName: details.canteenName,
+        token: {
+          tokenNumber: details.tokenNumber,
+          orderId: details.orderId,
+          userName: details.customerName,
+          status: details.status,
+          serviceType: details.items ? details.items.map(i => `${i.name} (x${i.quantity})`).join(', ') : 'Canteen Order',
+        },
+      },
     });
   } catch (error) {
     console.error('Error in getTokenDetails:', error);
@@ -32,19 +51,20 @@ const getTokenDetails = async (req, res) => {
 };
 
 /**
- * Cancel Token
+ * Cancel Token / Order
  * DELETE /api/token/:tokenNumber
  */
 const cancelToken = async (req, res) => {
   try {
     const { tokenNumber } = req.params;
-    const { locationId = 'campus-canteen' } = req.query;
+    const { locationId, canteenId } = req.query;
+    const targetCanteen = normalizeCanteenId(locationId || canteenId);
 
-    const result = await queueService.cancelToken(tokenNumber, locationId);
+    const result = await queueService.removeOrder(tokenNumber, targetCanteen);
 
     const io = req.app.get('io');
     if (io) {
-      io.emit('queue_updated', { locationId, action: 'TOKEN_CANCELLED', tokenNumber });
+      io.emit('queue_updated', { canteenId: targetCanteen, action: 'ORDER_CANCELLED', tokenNumber });
     }
 
     return res.status(200).json({
